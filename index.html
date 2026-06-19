@@ -351,6 +351,10 @@
     <div class="switch on" id="swTag"></div>
   </div>
   <div class="row">
+    <div><label>Mostra 3 soffiato</label><div class="hint">per la nota condivisa col 2 aspirato</div></div>
+    <div class="switch" id="swShared"></div>
+  </div>
+  <div class="row">
     <div><label>Sensibilità microfono</label><div class="hint">più alta = capta note più deboli</div></div>
   </div>
   <div class="row" style="margin-top:-6px;">
@@ -440,8 +444,18 @@ function midiToFreq(m){return 440*Math.pow(2,(m-69)/12);}
 function freqToMidi(f){return 69+12*Math.log2(f/440);}
 
 let MAP=[];
+let currentRoot=60;
+let sharedAsBlow=false; // false => shared 5th shown as -2 (draw); true => shown as 3 (blow)
 function buildMap(root){
-  MAP = BASE.map(b=>({midi:root+b.off, tab:b.tab, type:b.type})).sort((a,b)=>a.midi-b.midi);
+  if(root!==undefined) currentRoot=root;
+  MAP = BASE
+    .filter(b=>{
+      if(b.off===7 && b.type==='blow') return sharedAsBlow;   // "3"  only when toggle ON
+      if(b.off===7 && b.type==='draw') return !sharedAsBlow;  // "-2" only when toggle OFF
+      return true;
+    })
+    .map(b=>({midi:currentRoot+b.off, tab:b.tab, type:b.type}))
+    .sort((a,b)=>a.midi-b.midi);
 }
 
 const TOL_CENTS = 150;
@@ -659,6 +673,7 @@ wireSwitch('swNote',on=>{$('meta').style.display=on?'':'none';});
 wireSwitch('swTuner',on=>{$('tuner').style.display=on?'':'none';});
 wireSwitch('swRibbon',on=>{$('ribbonWrap').style.display=on?'':'none';});
 wireSwitch('swTag',on=>{$('tagline').style.opacity=on?'1':'0';});
+wireSwitch('swShared',on=>{ sharedAsBlow=on; buildMap(); });
 
 // gear / settings panel
 const panelEl=$('panel');
