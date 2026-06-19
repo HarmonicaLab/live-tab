@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Harmonica Lab — Live Tab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#07080a;
+    --steel:#15181d;
+    --steel-2:#1d2128;
+    --line:#2a2f37;
+    --ash:#6b7078;
+    --bone:#e8e4d8;     /* blow */
+    --gold:#c9a23f;     /* draw / brand */
+    --gold-hi:#f2d680;  /* metallic sheen */
+    --gold-lo:#8a6d22;
+    --copper:#cb7a33;   /* bend */
+    --copper-hi:#e8a05a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--void);
+    color:var(--bone);
+    font-family:'Space Grotesk',system-ui,sans-serif;
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+    user-select:none;
+    cursor:default;
+  }
+  /* faint industrial texture */
+  .bg-grid{
+    position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.012) 0 1px, transparent 1px 64px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.012) 0 1px, transparent 1px 64px);
+    mask-image:radial-gradient(ellipse 75% 65% at 50% 45%, #000 35%, transparent 100%);
+  }
+  .bg-vignette{
+    position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(ellipse 90% 80% at 50% 42%, transparent 40%, rgba(0,0,0,0.55) 100%);
+  }
+
+  /* ---------- TOP BAR ---------- */
+  #topbar{
+    position:fixed;top:0;left:0;right:0;z-index:30;
+    display:flex;align-items:center;gap:14px;
+    padding:16px 20px;
+    transition:opacity .45s ease, transform .45s ease;
+  }
+  #topbar.hidden{opacity:0;transform:translateY(-12px);pointer-events:none;}
+  .brand{display:flex;align-items:center;gap:10px;margin-right:auto;}
+  .brand .mark{
+    width:30px;height:30px;border-radius:6px;flex:none;
+    background:linear-gradient(135deg,var(--gold-hi),var(--gold) 45%,var(--gold-lo));
+    display:grid;place-items:center;
+    box-shadow:0 0 0 1px rgba(0,0,0,.4) inset, 0 3px 10px rgba(201,162,63,.18);
+  }
+  .brand .mark span{font-family:'Bebas Neue';font-size:17px;letter-spacing:-0.5px;color:#15120a;line-height:1;}
+  .brand .name{font-family:'Bebas Neue';letter-spacing:1.5px;font-size:19px;color:var(--bone);}
+  .brand .name b{color:var(--gold);font-weight:400;}
+
+  .ctrl{
+    display:flex;align-items:center;gap:8px;
+    background:var(--steel);border:1px solid var(--line);
+    color:var(--bone);border-radius:9px;
+    height:38px;padding:0 12px;font-size:13px;font-family:'Space Grotesk';
+    cursor:pointer;transition:border-color .2s, background .2s, color .2s;
+  }
+  .ctrl:hover{border-color:#3a414c;background:var(--steel-2);}
+  .ctrl:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+  select.ctrl{appearance:none;-webkit-appearance:none;padding-right:30px;
+    background-image:linear-gradient(45deg,transparent 50%,var(--ash) 50%),linear-gradient(135deg,var(--ash) 50%,transparent 50%);
+    background-position:calc(100% - 16px) 16px, calc(100% - 11px) 16px;
+    background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
+  .ctrl .lbl{font-size:10px;letter-spacing:1.5px;color:var(--ash);text-transform:uppercase;}
+  #micBtn .dot{width:9px;height:9px;border-radius:50%;background:#c9433f;flex:none;box-shadow:0 0 8px rgba(201,67,63,.6);}
+  #micBtn.live{border-color:rgba(201,162,63,.5);}
+  #micBtn.live .dot{background:#cf3a36;animation:pulse 1.1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--steel);}
+  .seg button{background:transparent;border:0;color:var(--ash);font-family:'Space Grotesk';
+    font-size:12px;font-weight:600;letter-spacing:.5px;padding:0 12px;height:38px;cursor:pointer;transition:.2s;}
+  .seg button.on{background:var(--gold);color:#15120a;}
+  .seg button:focus-visible{outline:2px solid var(--gold);outline-offset:-2px;}
+  .icon-btn{width:38px;justify-content:center;padding:0;}
+  .icon-btn svg{width:17px;height:17px;stroke:var(--bone);}
+
+  /* ---------- STAGE ---------- */
+  #leftCol{position:fixed;left:0;top:82px;bottom:0;width:50vw;z-index:10;
+    display:flex;flex-direction:column;}
+  #stage{position:fixed;right:0;width:50vw;bottom:18px;z-index:10;
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-end;}
+
+  #hero{display:flex;flex-direction:column;align-items:center;gap:6px;
+    transition:opacity .5s ease;will-change:transform;}
+  #hero.idle{opacity:.18;}
+
+  #action{
+    height:26px;display:flex;align-items:center;gap:10px;
+    font-family:'Bebas Neue';font-size:22px;letter-spacing:2px;
+    color:var(--ash);transition:color .15s;
+  }
+  #action .arrow{font-size:19px;line-height:1;transform:translateY(-1px);}
+  #action .bendtag{
+    font-size:12px;letter-spacing:2px;padding:2px 8px;border-radius:5px;
+    border:1px solid var(--copper);color:var(--copper-hi);
+    font-family:'Space Grotesk';font-weight:600;
+  }
+
+  #hole{
+    font-family:'Bebas Neue';
+    font-size:clamp(80px,17vw,210px);
+    line-height:.82;
+    letter-spacing:-2px;
+    background:linear-gradient(177deg,var(--gold-hi) 0%,var(--gold) 42%,var(--gold-lo) 54%,var(--gold-hi) 100%);
+    background-size:100% 220%;
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 6px 26px rgba(201,162,63,.22));
+    transition:opacity .2s;
+  }
+  #hole.swap{animation:swap .26s cubic-bezier(.2,.9,.25,1.2);}
+  @keyframes swap{
+    0%{transform:scale(.84);filter:drop-shadow(0 0 0 rgba(201,162,63,0));}
+    60%{transform:scale(1.04);}
+    100%{transform:scale(1);}
+  }
+  #hole.sheen{animation:swap .26s cubic-bezier(.2,.9,.25,1.2), sheen 1.1s ease;}
+  @keyframes sheen{0%{background-position:0 0;}100%{background-position:0 100%;}}
+
+  /* note colour variants */
+  #hero[data-type="blow"] #hole{
+    background:linear-gradient(177deg,#fff 0%,var(--bone) 45%,#9a978c 55%,#fff 100%);
+    background-size:100% 220%;-webkit-background-clip:text;background-clip:text;
+    filter:drop-shadow(0 6px 24px rgba(232,228,216,.14));
+  }
+  #hero[data-type="draw"] #hole{
+    background:linear-gradient(177deg,var(--gold-hi) 0%,var(--gold) 42%,var(--gold-lo) 54%,var(--gold-hi) 100%);
+    background-size:100% 220%;-webkit-background-clip:text;background-clip:text;
+    filter:drop-shadow(0 6px 26px rgba(201,162,63,.22));
+  }
+  #hero[data-type="bend"] #hole{
+    background:linear-gradient(177deg,var(--copper-hi) 0%,var(--copper) 42%,#7a4318 54%,var(--copper-hi) 100%);
+    background-size:100% 220%;-webkit-background-clip:text;background-clip:text;
+    filter:drop-shadow(0 6px 26px rgba(203,122,51,.24));
+  }
+
+  #meta{display:flex;align-items:center;gap:14px;margin-top:2px;height:24px;}
+  #noteName{font-family:'Bebas Neue';font-size:22px;letter-spacing:2px;color:var(--bone);}
+  #noteName small{font-size:14px;color:var(--ash);}
+  #freq{font-family:'JetBrains Mono';font-size:12px;color:var(--ash);letter-spacing:.5px;}
+
+  /* tuner */
+  #tuner{margin-top:12px;width:min(260px,34vw);height:30px;position:relative;
+    transition:opacity .4s;}
+  #tuner .track{position:absolute;top:50%;left:0;right:0;height:2px;transform:translateY(-50%);
+    background:linear-gradient(90deg,transparent,var(--line) 12%,var(--line) 88%,transparent);}
+  #tuner .center{position:absolute;left:50%;top:4px;bottom:4px;width:1px;transform:translateX(-50%);
+    background:var(--ash);opacity:.7;}
+  #tuner .zone{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:38px;height:14px;border:1px solid rgba(201,162,63,.25);border-radius:3px;}
+  #tunerNeedle{position:absolute;top:50%;left:50%;width:3px;height:22px;border-radius:2px;
+    transform:translate(-50%,-50%);background:var(--gold);
+    box-shadow:0 0 10px rgba(201,162,63,.5);transition:left .09s linear, background .12s;}
+  #tunerNeedle.intune{background:#8fd17a;box-shadow:0 0 12px rgba(143,209,122,.6);}
+  #centsRead{position:absolute;top:-2px;right:0;font-family:'JetBrains Mono';font-size:11px;color:var(--ash);}
+
+  /* ---------- RIBBON ---------- */
+  #ribbonWrap{flex:1;min-height:0;display:flex;flex-direction:column;
+    padding:14px 24px 14px;transition:opacity .45s,transform .45s;}
+  #ribbonWrap.hidden{opacity:0;transform:translateY(-14px);pointer-events:none;}
+  #ribbonLabel{flex:none;font-size:12px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ash);
+    margin:0 4px 10px;display:flex;align-items:center;gap:10px;}
+  #ribbonLabel::after{content:"";flex:1;height:1px;background:var(--line);}
+  #ribbon{flex:1;min-height:0;display:flex;flex-wrap:wrap;align-content:flex-start;gap:10px;
+    overflow-y:auto;scrollbar-width:none;padding-top:2px;}
+  #ribbon::-webkit-scrollbar{display:none;}
+  .spacer{flex:none;width:30px;height:94px;display:grid;place-items:center;}
+  .spacer::before{content:"";width:2px;height:48px;border-radius:2px;
+    background:linear-gradient(180deg,transparent,rgba(201,162,63,.45),transparent);}
+  .chip{flex:none;min-width:78px;height:94px;padding:0 16px;border-radius:12px;
+    display:grid;place-items:center;font-family:'Bebas Neue';font-size:50px;letter-spacing:1px;
+    border:1px solid var(--line);color:var(--ash);background:var(--steel);
+    animation:chipIn .3s cubic-bezier(.2,.9,.3,1.1);}
+  @keyframes chipIn{from{opacity:0;transform:translateY(-10px) scale(.92);}to{opacity:1;transform:none;}}
+  .chip.noanim{animation:none;}
+  .chip[data-type="blow"]{color:var(--bone);border-color:#3a3f48;}
+  .chip[data-type="draw"]{color:var(--gold);border-color:rgba(201,162,63,.4);}
+  .chip[data-type="bend"]{color:var(--copper-hi);border-color:rgba(203,122,51,.45);}
+  .chip.cur{transform:scale(1.06);}
+  .chip[data-type="blow"].cur{background:var(--bone);color:#15120a;}
+  .chip[data-type="draw"].cur{background:var(--gold);color:#15120a;border-color:var(--gold);}
+  .chip[data-type="bend"].cur{background:var(--copper);color:#15120a;border-color:var(--copper);}
+
+  /* ---------- TAGLINE ---------- */
+  #tagline{position:fixed;left:0;width:50vw;bottom:20px;z-index:5;text-align:center;
+    font-family:'Bebas Neue';letter-spacing:4px;
+    font-size:13px;color:#3c4049;pointer-events:none;transition:opacity .4s;}
+
+  /* ---------- SETTINGS PANEL ---------- */
+  #panel{position:fixed;top:70px;right:20px;z-index:40;width:292px;
+    max-height:calc(100vh - 90px);overflow-y:auto;
+    background:rgba(21,24,29,.96);border:1px solid var(--line);border-radius:14px;
+    padding:18px;backdrop-filter:blur(8px);
+    opacity:0;transform:translateY(-8px) scale(.98);pointer-events:none;transition:.22s;}
+  #sessionName{width:100%;background:var(--steel-2);border:1px solid var(--line);color:var(--bone);
+    border-radius:8px;padding:9px 11px;font-family:'Space Grotesk';font-size:13px;margin-bottom:10px;outline:none;}
+  #sessionName:focus{border-color:var(--gold);}
+  #sessionName::placeholder{color:var(--ash);}
+  .sess{display:flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid var(--line);
+    border-radius:8px;margin-bottom:7px;background:var(--steel-2);}
+  .sess .info{flex:1;min-width:0;}
+  .sess .nm{font-size:13px;color:var(--bone);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .sess .mt{font-size:10px;color:var(--ash);margin-top:2px;}
+  .sess button{background:transparent;border:0;cursor:pointer;font-size:11px;padding:4px 6px;
+    border-radius:6px;font-family:'Space Grotesk';font-weight:600;letter-spacing:.5px;}
+  .sess button.load{color:var(--gold);}
+  .sess button.del{color:#c9605c;}
+  .sess button:hover{background:rgba(255,255,255,.06);}
+  #sessionList:empty::after{content:"Nessuna sessione salvata.";color:var(--ash);font-size:11px;display:block;padding:2px;}
+  #panel.open{opacity:1;transform:none;pointer-events:auto;}
+  #panel h3{font-family:'Bebas Neue';letter-spacing:2px;font-size:15px;color:var(--gold);
+    margin-bottom:14px;font-weight:400;}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;}
+  .row label{font-size:12px;color:var(--bone);}
+  .row .hint{font-size:10px;color:var(--ash);margin-top:2px;}
+  .switch{width:42px;height:24px;border-radius:13px;background:var(--steel-2);border:1px solid var(--line);
+    position:relative;cursor:pointer;flex:none;transition:.2s;}
+  .switch::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;
+    background:var(--ash);transition:.2s;}
+  .switch.on{background:rgba(201,162,63,.25);border-color:var(--gold);}
+  .switch.on::after{left:21px;background:var(--gold);}
+  input[type=range]{-webkit-appearance:none;width:120px;height:4px;border-radius:3px;background:var(--steel-2);outline:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;
+    background:var(--gold);cursor:pointer;box-shadow:0 0 6px rgba(201,162,63,.4);}
+  input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radius:50%;background:var(--gold);cursor:pointer;}
+  .panel-note{font-size:10px;color:var(--ash);line-height:1.5;border-top:1px solid var(--line);padding-top:12px;}
+
+  /* ---------- START OVERLAY ---------- */
+  #start{position:fixed;inset:0;z-index:80;background:var(--void);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;text-align:center;padding:24px;}
+  #start.gone{opacity:0;pointer-events:none;transition:opacity .5s;}
+  #start .logo{width:74px;height:74px;border-radius:16px;
+    background:linear-gradient(135deg,var(--gold-hi),var(--gold) 45%,var(--gold-lo));
+    display:grid;place-items:center;box-shadow:0 0 0 1px rgba(0,0,0,.4) inset,0 10px 40px rgba(201,162,63,.2);}
+  #start .logo span{font-family:'Bebas Neue';font-size:38px;letter-spacing:-1px;color:#15120a;}
+  #start h1{font-family:'Bebas Neue';font-size:40px;letter-spacing:3px;font-weight:400;}
+  #start h1 .gold{color:var(--gold);}
+  #start h1 .sub{color:var(--ash);}
+  #start p{color:var(--ash);font-size:14px;max-width:340px;line-height:1.6;}
+  #startBtn{margin-top:4px;background:linear-gradient(180deg,#e0514a,#b02a23);
+    color:#fff;border:0;border-radius:11px;font-family:'Bebas Neue';font-size:22px;letter-spacing:2px;
+    padding:14px 34px;cursor:pointer;box-shadow:0 8px 26px rgba(176,42,35,.34);transition:transform .15s;}
+  #startBtn:hover{transform:translateY(-2px);}
+  #startBtn:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px;}
+  #startErr{color:#cf6b67;font-size:13px;min-height:18px;}
+
+  @media (max-width:560px){
+    #topbar{gap:8px;padding:12px;flex-wrap:wrap;}
+    .brand .name{display:none;}
+    #meta{flex-direction:column;gap:2px;height:auto;}
+    #action{font-size:24px;}
+    #leftCol{width:100vw;bottom:150px;top:120px;}
+    #stage{width:100vw;}
+    #tagline{display:none;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.01ms !important;transition-duration:.05s !important;}
+  }
+
+  /* ---------- TOAST ---------- */
+  #toast{position:fixed;left:50%;bottom:290px;z-index:60;
+    transform:translateX(-50%) translateY(10px);
+    background:rgba(21,24,29,.97);border:1px solid var(--line);color:var(--bone);
+    padding:11px 18px;border-radius:10px;font-size:13px;max-width:80vw;text-align:center;
+    opacity:0;pointer-events:none;transition:.25s;backdrop-filter:blur(6px);}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-vignette"></div>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div class="brand">
+    <div class="mark"><span>HL</span></div>
+    <div class="name">HARMONICA <b>LAB</b></div>
+  </div>
+
+  <div class="ctrl" style="cursor:default;gap:6px;">
+    <span class="lbl">Tonalità</span>
+    <select id="keySelect" class="ctrl" style="height:auto;border:0;background:transparent;padding:0 18px 0 0;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;"></select>
+  </div>
+
+  <div class="seg" id="langSeg">
+    <button data-lang="it" class="on">IT</button>
+    <button data-lang="en">EN</button>
+  </div>
+
+  <button id="micBtn" class="ctrl"><span class="dot"></span><span id="micLbl">Microfono</span></button>
+
+  <button id="spaceBtn" class="ctrl" title="Inserisci uno spazio nella tablatura (Barra spaziatrice)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="var(--bone)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><path d="M4 9v4M20 9v4M4 13h16"/></svg>
+    <span id="spaceLbl">Spazio</span>
+  </button>
+
+  <button id="undoBtn" class="ctrl" title="Annulla l'ultimo inserimento (Backspace)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="var(--bone)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-1"/></svg>
+    <span id="undoLbl">Indietro</span>
+  </button>
+
+  <button id="pdfBtn" class="ctrl" title="Esporta la tablatura in PDF">
+    <svg viewBox="0 0 24 24" fill="none" stroke="var(--bone)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+    <span id="pdfLbl">PDF</span>
+  </button>
+
+  <button id="gearBtn" class="ctrl icon-btn" title="Opzioni" aria-label="Opzioni">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+  </button>
+
+  <button id="fsBtn" class="ctrl icon-btn" title="Schermo intero" aria-label="Schermo intero">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3"/></svg>
+  </button>
+</div>
+
+<!-- SETTINGS PANEL -->
+<div id="panel">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <h3 style="margin:0;">Opzioni</h3>
+    <button id="panelClose" aria-label="Chiudi" style="background:transparent;border:0;color:var(--ash);font-size:24px;line-height:1;cursor:pointer;padding:0 2px;">&times;</button>
+  </div>
+  <div class="row">
+    <div><label>Nome nota + frequenza</label></div>
+    <div class="switch on" id="swNote"></div>
+  </div>
+  <div class="row">
+    <div><label>Accordatore (cents)</label></div>
+    <div class="switch on" id="swTuner"></div>
+  </div>
+  <div class="row">
+    <div><label>Nastro tablatura</label></div>
+    <div class="switch on" id="swRibbon"></div>
+  </div>
+  <div class="row">
+    <div><label>Tagline</label></div>
+    <div class="switch on" id="swTag"></div>
+  </div>
+  <div class="row">
+    <div><label>Sensibilità microfono</label><div class="hint">più alta = capta note più deboli</div></div>
+  </div>
+  <div class="row" style="margin-top:-6px;">
+    <input type="range" id="sens" min="0" max="100" value="55" style="width:100%;">
+  </div>
+  <div class="row" style="margin-top:2px;">
+    <button id="resetBtn" class="ctrl" style="width:100%;justify-content:center;">Svuota tablatura</button>
+  </div>
+
+  <div style="border-top:1px solid var(--line);margin:6px 0 14px;"></div>
+  <h3 id="sessTitle">Sessioni</h3>
+  <input id="sessionName" type="text" placeholder="Nome sessione / export" autocomplete="off" spellcheck="false">
+  <button id="saveBtn" class="ctrl" style="width:100%;justify-content:center;margin-bottom:14px;">Salva sessione</button>
+  <div id="sessionList"></div>
+  <div class="panel-note">Premi <b style="color:var(--bone)">H</b> per nascondere/mostrare l'interfaccia mentre registri. Lo sfondo nero è pensato per la cattura schermo o come overlay in OBS.</div>
+</div>
+
+<!-- STAGE -->
+<div id="leftCol">
+
+<!-- RIBBON (top) -->
+<div id="ribbonWrap">
+  <div id="ribbonLabel">Tablatura live</div>
+  <div id="ribbon"></div>
+</div>
+</div><!-- /leftCol -->
+
+<div id="stage">
+  <div id="hero" class="idle" data-type="">
+    <div id="action"><span class="arrow"></span><span id="actWord"></span><span class="bendtag" id="bendTag" style="display:none;">BEND</span></div>
+    <div id="hole">·</div>
+    <div id="meta">
+      <div id="noteName">—</div>
+      <div id="freq">000 Hz</div>
+    </div>
+    <div id="tuner">
+      <div class="track"></div><div class="zone"></div><div class="center"></div>
+      <div id="tunerNeedle"></div>
+      <div id="centsRead"></div>
+    </div>
+  </div>
+</div>
+
+<div id="tagline">NON SI IMPROVVISA · SI COSTRUISCE IL SUONO</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- START OVERLAY -->
+<div id="start">
+  <div class="logo"><span>HL</span></div>
+  <h1><span class="gold">HARMONICA LAB</span> <span class="sub">· LIVE TAB</span></h1>
+  <p>Accendi il microfono e suona: la tablatura si scrive da sola, nota dopo nota. Scegli la tonalità dell'armonica prima di iniziare.</p>
+  <button id="startBtn">ACCENDI IL MICROFONO</button>
+  <div id="startErr"></div>
+</div>
+
+<script>
+"use strict";
+
+/* ============ NOTE MAP (Richter tuning) ============ */
+const KEYS = [
+  {name:'G', root:55},{name:'Ab',root:56},{name:'A', root:57},{name:'Bb',root:58},
+  {name:'B', root:59},{name:'C', root:60},{name:'Db',root:61},{name:'D', root:62},
+  {name:'Eb',root:63},{name:'E', root:64},{name:'F', root:65},{name:'F#',root:66}
+];
+// offsets relative to hole-1 blow (root), with tab label + type
+const BASE = [
+  {off:0,tab:'1',type:'blow'},{off:4,tab:'2',type:'blow'},
+  {off:12,tab:'4',type:'blow'},{off:16,tab:'5',type:'blow'},{off:19,tab:'6',type:'blow'},
+  {off:24,tab:'7',type:'blow'},{off:28,tab:'8',type:'blow'},{off:31,tab:'9',type:'blow'},{off:36,tab:'10',type:'blow'},
+  {off:2,tab:'-1',type:'draw'},{off:7,tab:'-2',type:'draw'},{off:11,tab:'-3',type:'draw'},
+  {off:14,tab:'-4',type:'draw'},{off:17,tab:'-5',type:'draw'},{off:21,tab:'-6',type:'draw'},
+  {off:23,tab:'-7',type:'draw'},{off:26,tab:'-8',type:'draw'},{off:29,tab:'-9',type:'draw'},{off:33,tab:'-10',type:'draw'},
+  {off:1,tab:"-1'",type:'bend'},
+  {off:6,tab:"-2'",type:'bend'},{off:5,tab:"-2''",type:'bend'},
+  {off:10,tab:"-3'",type:'bend'},{off:9,tab:"-3''",type:'bend'},{off:8,tab:"-3'''",type:'bend'},
+  {off:13,tab:"-4'",type:'bend'},
+  {off:20,tab:"-6'",type:'bend'},
+  {off:27,tab:"8'",type:'bend'},
+  {off:30,tab:"9'",type:'bend'},
+  {off:35,tab:"10'",type:'bend'},{off:34,tab:"10''",type:'bend'}
+];
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+function midiToName(m){const r=Math.round(m);return NOTE_NAMES[((r%12)+12)%12]+(Math.floor(r/12)-1);}
+function midiToFreq(m){return 440*Math.pow(2,(m-69)/12);}
+function freqToMidi(f){return 69+12*Math.log2(f/440);}
+
+let MAP=[];
+function buildMap(root){
+  MAP = BASE.map(b=>({midi:root+b.off, tab:b.tab, type:b.type})).sort((a,b)=>a.midi-b.midi);
+}
+
+const TOL_CENTS = 150;
+function findClosest(freq){
+  const m = freqToMidi(freq);
+  let best=null, bestD=Infinity;
+  for(const e of MAP){
+    const d=Math.abs(m-e.midi);
+    if(d<bestD){bestD=d;best=e;}
+  }
+  if(!best || bestD>TOL_CENTS/100) return null;
+  const cents = Math.round((m-best.midi)*100);
+  return {tab:best.tab,type:best.type,midi:best.midi,cents};
+}
+
+/* ============ YIN PITCH DETECTION ============ */
+function yin(buf, sr, threshold){
+  const half = buf.length>>1;
+  const d = new Float32Array(half);
+  for(let tau=0;tau<half;tau++){
+    let sum=0;
+    for(let i=0;i<half;i++){const x=buf[i]-buf[i+tau];sum+=x*x;}
+    d[tau]=sum;
+  }
+  d[0]=1; let run=0;
+  for(let tau=1;tau<half;tau++){run+=d[tau];d[tau]=d[tau]*tau/run;}
+  let t=-1;
+  for(let tau=2;tau<half;tau++){
+    if(d[tau]<threshold){while(tau+1<half&&d[tau+1]<d[tau])tau++;t=tau;break;}
+  }
+  if(t===-1) return -1;
+  const x0=t>0?t-1:t, x2=t+1<half?t+1:t;
+  let bt;
+  if(x0===t) bt=d[t]<=d[x2]?t:x2;
+  else if(x2===t) bt=d[t]<=d[x0]?t:x0;
+  else{const s0=d[x0],s1=d[t],s2=d[x2];bt=t+(s2-s0)/(2*(2*s1-s2-s0));}
+  return sr/bt;
+}
+
+/* ============ AUDIO ============ */
+let ac=null, analyser=null, micStream=null, rafId=null, buf=null, running=false;
+const state={lastTab:null, stable:0, stableTab:null, silence:0, armed:true};
+
+async function startMic(){
+  try{
+    micStream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    ac = new (window.AudioContext||window.webkitAudioContext)();
+    if(ac.state==='suspended') await ac.resume();
+    const src = ac.createMediaStreamSource(micStream);
+    analyser = ac.createAnalyser();
+    analyser.fftSize = 2048;
+    buf = new Float32Array(analyser.fftSize);
+    src.connect(analyser);
+    running=true;
+    document.getElementById('micBtn').classList.add('live');
+    setMicLabel();
+    loop();
+    return true;
+  }catch(err){
+    return err;
+  }
+}
+function stopMic(){
+  running=false;
+  if(rafId)cancelAnimationFrame(rafId);
+  if(micStream)micStream.getTracks().forEach(t=>t.stop());
+  if(ac)ac.close();
+  ac=null;analyser=null;micStream=null;
+  document.getElementById('micBtn').classList.remove('live');
+  setMicLabel();
+  setHeroIdle();
+}
+
+function rms(b){let s=0;for(let i=0;i<b.length;i++)s+=b[i]*b[i];return Math.sqrt(s/b.length);}
+
+function loop(){
+  if(!running)return;
+  analyser.getFloatTimeDomainData(buf);
+  const level = rms(buf);
+  const thr = settings.rmsThreshold;
+
+  if(level < thr){
+    state.silence++;
+    if(state.silence>8){state.armed=true;setHeroIdle();}
+  }else{
+    const f = yin(buf, ac.sampleRate, 0.12);
+    if(f>60 && f<2600){
+      const hit = findClosest(f);
+      if(hit){
+        state.silence=0;
+        showLive(hit, f);
+        // stability for registration
+        if(hit.tab===state.stableTab){state.stable++;}
+        else{state.stableTab=hit.tab;state.stable=1;}
+        if(state.stable>=3 && (hit.tab!==state.lastTab || state.armed)){
+          registerNote(hit);
+          state.lastTab=hit.tab;
+          state.armed=false;
+        }
+      }
+    }
+  }
+  rafId=requestAnimationFrame(loop);
+}
+
+/* ============ HERO DISPLAY ============ */
+const heroEl=document.getElementById('hero');
+const holeEl=document.getElementById('hole');
+const actWord=document.getElementById('actWord');
+const actArrow=document.querySelector('#action .arrow');
+const bendTag=document.getElementById('bendTag');
+const noteNameEl=document.getElementById('noteName');
+const freqEl=document.getElementById('freq');
+const needle=document.getElementById('tunerNeedle');
+const centsRead=document.getElementById('centsRead');
+let curHeroTab=null;
+
+const WORDS={it:{blow:'SOFFIO',draw:'ASPIRO'},en:{blow:'BLOW',draw:'DRAW'}};
+let lang='it';
+
+function parseTab(tab){
+  const draw = tab.startsWith('-');
+  const holeNum = tab.replace(/['-]/g,'');
+  const bends = (tab.match(/'/g)||[]).length;
+  return {draw, holeNum, bends};
+}
+
+function showLive(hit, freq){
+  heroEl.classList.remove('idle');
+  const {draw, holeNum} = parseTab(hit.tab);
+  heroEl.dataset.type = hit.type;
+  // action label
+  actArrow.textContent = draw ? '▼' : '▲';
+  actWord.textContent = WORDS[lang][draw?'draw':'blow'];
+  actWord.parentElement.style.color = hit.type==='bend' ? 'var(--copper-hi)' : (draw?'var(--gold)':'var(--bone)');
+  bendTag.style.display = hit.type==='bend' ? 'inline-block' : 'none';
+  // hole number (animate on change)
+  if(hit.tab!==curHeroTab){
+    holeEl.textContent = holeNum;
+    holeEl.classList.remove('sheen');void holeEl.offsetWidth;holeEl.classList.add('sheen');
+    curHeroTab=hit.tab;
+  }
+  // note name + freq
+  noteNameEl.innerHTML = midiToName(hit.midi).replace(/(\d+)/,'<small>$1</small>');
+  freqEl.textContent = Math.round(freq)+' Hz';
+  // tuner
+  const clamped=Math.max(-50,Math.min(50,hit.cents));
+  needle.style.left = (50 + clamped) + '%';
+  const intune = Math.abs(hit.cents)<=8;
+  needle.classList.toggle('intune',intune);
+  centsRead.textContent = (hit.cents>0?'+':'')+hit.cents+'¢';
+}
+
+function setHeroIdle(){
+  heroEl.classList.add('idle');
+  curHeroTab=null;state.stableTab=null;state.stable=0;
+}
+
+/* ============ RIBBON ============ */
+const ribbon=document.getElementById('ribbon');
+const tabHistory=[];   // full sequence since last clear (for PDF export)
+function registerNote(hit){
+  const {holeNum}=parseTab(hit.tab);
+  tabHistory.push({tab:hit.tab,type:hit.type});
+  if(tabHistory.length>5000) tabHistory.shift();
+  document.querySelectorAll('.chip.cur').forEach(c=>c.classList.remove('cur'));
+  const chip=document.createElement('div');
+  chip.className='chip cur';
+  chip.dataset.type=hit.type;
+  chip.textContent=hit.tab; // full tab incl. bend marks
+  ribbon.appendChild(chip);
+  // keep ribbon scrolled to end
+  ribbon.scrollTop=ribbon.scrollHeight;
+  while(ribbon.children.length>96) ribbon.removeChild(ribbon.firstChild);
+}
+
+function registerSpace(){
+  // allow multiple, consecutive spaces; just don't lead with one on an empty tab
+  if(tabHistory.length===0) return;
+  tabHistory.push({type:'space'});
+  if(tabHistory.length>5000) tabHistory.shift();
+  const sp=document.createElement('div');
+  sp.className='spacer';
+  ribbon.appendChild(sp);
+  ribbon.scrollTop=ribbon.scrollHeight;
+  while(ribbon.children.length>96) ribbon.removeChild(ribbon.firstChild);
+}
+
+function undoLast(){
+  if(tabHistory.length===0) return;
+  tabHistory.pop();
+  rebuildRibbonFromHistory();   // resync the visible tab (reveals an older note if needed)
+  state.lastTab=null; state.stableTab=null; state.stable=0; state.armed=true;
+}
+
+/* ============ SETTINGS / UI ============ */
+const settings={rmsThreshold:0.012};
+function applySens(v){
+  // slider 0..100 -> threshold high(0.05) .. low(0.003), inverted (higher slider = more sensitive)
+  const t = 0.05 - (v/100)*(0.05-0.003);
+  settings.rmsThreshold = t;
+}
+applySens(55);
+
+const $=id=>document.getElementById(id);
+function toggleSwitch(el,on){el.classList.toggle('on',on);}
+
+$('sens').addEventListener('input',e=>applySens(+e.target.value));
+
+function wireSwitch(swId, fn){
+  const el=$(swId);
+  el.addEventListener('click',()=>{const on=!el.classList.contains('on');toggleSwitch(el,on);fn(on);});
+}
+wireSwitch('swNote',on=>{$('meta').style.display=on?'':'none';});
+wireSwitch('swTuner',on=>{$('tuner').style.display=on?'':'none';});
+wireSwitch('swRibbon',on=>{$('ribbonWrap').style.display=on?'':'none';});
+wireSwitch('swTag',on=>{$('tagline').style.opacity=on?'1':'0';});
+
+// gear / settings panel
+const panelEl=$('panel');
+let panelOpen=false;
+function setPanel(open){
+  panelOpen=open;
+  panelEl.classList.toggle('open',open);
+  if(open) $('topbar').classList.remove('hidden');
+}
+$('gearBtn').addEventListener('click',e=>{e.stopPropagation();setPanel(!panelOpen);});
+$('panelClose').addEventListener('click',()=>setPanel(false));
+document.addEventListener('click',e=>{
+  if(!panelOpen)return;
+  if(panelEl.contains(e.target)||$('gearBtn').contains(e.target))return;
+  setPanel(false);
+});
+
+// key selector
+const keySel=$('keySelect');
+KEYS.forEach((k,i)=>{const o=document.createElement('option');o.value=i;o.textContent=k.name;if(k.name==='C')o.selected=true;keySel.appendChild(o);});
+function setKey(i){buildMap(KEYS[i].root);}
+buildMap(60);
+keySel.addEventListener('change',e=>setKey(+e.target.value));
+
+// lang
+document.querySelectorAll('#langSeg button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('#langSeg button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');lang=b.dataset.lang;
+    $('micLbl').textContent = lang==='it'?'Microfono':'Mic';
+    $('spaceLbl').textContent = lang==='it'?'Spazio':'Space';
+    $('undoLbl').textContent = lang==='it'?'Indietro':'Undo';
+    $('resetBtn').textContent = lang==='it'?'Svuota tablatura':'Clear tab';
+    $('sessTitle').textContent = lang==='it'?'Sessioni':'Sessions';
+    $('saveBtn').textContent = lang==='it'?'Salva sessione':'Save session';
+    $('sessionName').placeholder = lang==='it'?'Nome sessione / export':'Session / export name';
+    renderSessions();
+    $('ribbonLabel').firstChild && ($('ribbonLabel').childNodes[0].nodeValue = lang==='it'?'Tablatura live':'Live tab');
+    $('tagline').textContent = lang==='it'?'NON SI IMPROVVISA · SI COSTRUISCE IL SUONO':"WE DON'T IMPROVISE HERE · WE BUILD THE SOUND";
+  });
+});
+function setMicLabel(){
+  const on=running;
+  $('micLbl').textContent = on?(lang==='it'?'In ascolto':'Listening'):(lang==='it'?'Microfono':'Mic');
+}
+
+// fullscreen
+$('fsBtn').addEventListener('click',()=>{
+  if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
+  else document.exitFullscreen();
+});
+
+/* ============ TOAST ============ */
+let toastT=null;
+function toast(msg){
+  const t=$('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+/* ============ PDF EXPORT ============ */
+function loadJsPDF(){
+  return new Promise((res,rej)=>{
+    if(window.jspdf&&window.jspdf.jsPDF) return res();
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload=()=>res(); s.onerror=()=>rej(new Error('load'));
+    document.head.appendChild(s);
+  });
+}
+function setExportBusy(b){
+  const btn=$('pdfBtn');
+  btn.style.opacity=b?'.55':''; btn.style.pointerEvents=b?'none':'';
+  $('pdfLbl').textContent=b?'…':'PDF';
+}
+async function exportPDF(){
+  if(tabHistory.length===0){ toast(lang==='it'?'Nessuna nota da esportare. Suona qualcosa prima.':'No notes yet — play something first.'); return; }
+  const isIT=lang==='it';
+  // resolve a name for the export (ask if empty)
+  let name=$('sessionName').value.trim();
+  if(!name){
+    const ans=prompt(isIT?'Nome dell\'export PDF:':'PDF export name:', defaultSessionName());
+    if(ans===null) return;            // user cancelled
+    name=ans.trim();
+    if(name) $('sessionName').value=name;
+  }
+  if(!name) name=isIT?'Sessione':'Session';
+  try{
+    setExportBusy(true);
+    await loadJsPDF();
+    const { jsPDF }=window.jspdf;
+    const doc=new jsPDF({unit:'mm',format:'a4'});
+    const pageW=210,pageH=297,margin=14;
+    const keyName=KEYS[+keySel.value].name;
+
+    // header band
+    doc.setFillColor(7,8,10); doc.rect(0,0,pageW,30,'F');
+    doc.setTextColor(201,162,63); doc.setFont('helvetica','bold'); doc.setFontSize(20);
+    doc.text('HARMONICA LAB',margin,15);
+    doc.setTextColor(232,228,216); doc.setFont('helvetica','normal'); doc.setFontSize(10.5);
+    doc.text(isIT?'Trascrizione tablatura':'Tab transcription',margin,22);
+    doc.setDrawColor(201,162,63); doc.setLineWidth(0.6); doc.line(margin,30,pageW-margin,30);
+
+    // session name (title)
+    doc.setTextColor(21,18,10); doc.setFont('helvetica','bold'); doc.setFontSize(16);
+    doc.text(name, margin, 41, {maxWidth:pageW-2*margin});
+
+    // meta
+    const d=new Date();
+    const dateStr=d.toLocaleDateString()+'  '+d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    doc.setTextColor(107,112,120); doc.setFont('helvetica','normal'); doc.setFontSize(10);
+    const noteCount=tabHistory.filter(n=>n.type!=='space').length;
+    doc.text((isIT?`Tonalità: ${keyName}     ·     Note: ${noteCount}     ·     ${dateStr}`
+                  :`Key: ${keyName}     ·     Notes: ${noteCount}     ·     ${dateStr}`), margin, 48);
+
+    // legend
+    function swatch(x,label,rgb){
+      doc.setFillColor(rgb[0],rgb[1],rgb[2]); doc.setDrawColor(42,47,55); doc.setLineWidth(0.2);
+      doc.roundedRect(x,54,6,4,1,1,'FD');
+      doc.setTextColor(107,112,120); doc.setFont('helvetica','normal'); doc.setFontSize(9);
+      doc.text(label,x+8,57.3);
+    }
+    swatch(margin,        isIT?'Soffio':'Blow', [232,228,216]);
+    swatch(margin+34,     isIT?'Aspiro':'Draw', [201,162,63]);
+    swatch(margin+68,     'Bend',               [203,122,51]);
+
+    // tab grid
+    const cellW=20,cellH=12,gapX=3,gapY=4;
+    const perRow=Math.floor((pageW-2*margin+gapX)/(cellW+gapX));
+    let x=margin, y=64, col=0;
+    const bottom=pageH-16;
+    for(const n of tabHistory){
+      if(y+cellH>bottom){ doc.addPage(); y=margin+4; x=margin; col=0; }
+      if(n.type==='space'){
+        if(col>0){ doc.setDrawColor(201,162,63); doc.setLineWidth(0.4);
+          doc.line(x+cellW/2, y+1.5, x+cellW/2, y+cellH-1.5); }
+        col++; x+=cellW+gapX;
+        if(col>=perRow){ col=0; x=margin; y+=cellH+gapY; }
+        continue;
+      }
+      let fill=[203,122,51];
+      if(n.type==='blow') fill=[232,228,216];
+      else if(n.type==='draw') fill=[201,162,63];
+      doc.setFillColor(fill[0],fill[1],fill[2]); doc.setDrawColor(42,47,55); doc.setLineWidth(0.25);
+      doc.roundedRect(x,y,cellW,cellH,2,2,'FD');
+      doc.setTextColor(21,18,10); doc.setFont('helvetica','bold'); doc.setFontSize(14);
+      doc.text(String(n.tab), x+cellW/2, y+cellH/2+1.6, {align:'center'});
+      col++; x+=cellW+gapX;
+      if(col>=perRow){ col=0; x=margin; y+=cellH+gapY; }
+    }
+
+    // footers
+    const tag=isIT?'Non si improvvisa · Si costruisce il suono':"We don't improvise here · We build the sound";
+    const pages=doc.getNumberOfPages();
+    for(let i=1;i<=pages;i++){
+      doc.setPage(i);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(90,94,103);
+      doc.text(tag, pageW/2, pageH-8, {align:'center'});
+      doc.text(`${i}/${pages}`, pageW-margin, pageH-8, {align:'right'});
+    }
+
+    doc.save(`harmonica-lab-${safeFile(name)}-${keyName}.pdf`);
+    toast(isIT?'PDF esportato.':'PDF exported.');
+  }catch(e){
+    toast(lang==='it'?'Impossibile caricare il generatore PDF (sei offline?).':'Could not load the PDF generator (offline?).');
+  }finally{ setExportBusy(false); }
+}
+$('pdfBtn').addEventListener('click',exportPDF);
+$('spaceBtn').addEventListener('click',registerSpace);
+$('undoBtn').addEventListener('click',undoLast);
+
+// clear tab
+$('resetBtn').addEventListener('click',()=>{
+  if(tabHistory.length===0){ toast(lang==='it'?'La tablatura è già vuota.':'Tab is already empty.'); return; }
+  const ok=confirm(lang==='it'?'Svuotare la tablatura corrente?':'Clear the current tab?');
+  if(!ok) return;
+  tabHistory.length=0; ribbon.innerHTML='';
+  state.lastTab=null; state.stableTab=null; state.stable=0; state.armed=true;
+  setPanel(false);
+  toast(lang==='it'?'Tablatura svuotata.':'Tab cleared.');
+});
+
+/* ============ SESSIONS (saved in browser) ============ */
+const SKEY='hlab_sessions_v1';
+let lsOK=true;
+try{ localStorage.setItem('__hlab_t','1'); localStorage.removeItem('__hlab_t'); }catch(e){ lsOK=false; }
+let memSessions=[];
+function loadSessions(){
+  if(lsOK){ try{ const r=localStorage.getItem(SKEY); return r?JSON.parse(r):[]; }catch(e){} }
+  return memSessions;
+}
+function persistSessions(arr){
+  memSessions=arr;
+  if(lsOK){ try{ localStorage.setItem(SKEY, JSON.stringify(arr)); }catch(e){} }
+}
+function defaultSessionName(){
+  const k=KEYS[+keySel.value].name, d=new Date();
+  return (lang==='it'?'Sessione ':'Session ')+k+' '+d.toLocaleDateString();
+}
+function safeFile(s){
+  return (s.normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+           .replace(/[^A-Za-z0-9\-]+/g,'_').replace(/^_+|_+$/g,'').slice(0,60)) || 'sessione';
+}
+
+function saveCurrentSession(){
+  if(tabHistory.length===0){ toast(lang==='it'?'Niente da salvare: suona qualcosa prima.':'Nothing to save — play something first.'); return; }
+  let name=$('sessionName').value.trim() || defaultSessionName();
+  $('sessionName').value=name;
+  const sessions=loadSessions();
+  sessions.unshift({
+    id:'s'+Date.now(), name, key:+keySel.value, keyName:KEYS[+keySel.value].name,
+    notes:tabHistory.slice(), created:Date.now()
+  });
+  if(sessions.length>50) sessions.length=50;
+  persistSessions(sessions);
+  renderSessions();
+  toast(lang==='it'?`Sessione "${name}" salvata.`:`Session "${name}" saved.`);
+}
+
+function rebuildRibbonFromHistory(){
+  ribbon.innerHTML='';
+  const start=Math.max(0,tabHistory.length-96);
+  for(let i=start;i<tabHistory.length;i++){
+    const n=tabHistory[i];
+    if(n.type==='space'){
+      const sp=document.createElement('div'); sp.className='spacer';
+      ribbon.appendChild(sp); continue;
+    }
+    const chip=document.createElement('div');
+    chip.className='chip noanim'+(i===tabHistory.length-1?' cur':'');
+    chip.dataset.type=n.type; chip.textContent=n.tab;
+    ribbon.appendChild(chip);
+  }
+  ribbon.scrollTop=ribbon.scrollHeight;
+}
+
+function loadSession(id){
+  const s=loadSessions().find(x=>x.id===id); if(!s) return;
+  tabHistory.length=0; for(const n of s.notes) tabHistory.push(n);
+  rebuildRibbonFromHistory();
+  keySel.value=s.key; setKey(s.key);
+  $('sessionName').value=s.name;
+  state.lastTab=null; state.stableTab=null; state.stable=0; state.armed=true;
+  setPanel(false);
+  toast(lang==='it'?`Sessione "${s.name}" caricata.`:`Session "${s.name}" loaded.`);
+}
+
+function deleteSession(id){
+  const s=loadSessions().find(x=>x.id===id); if(!s) return;
+  if(!confirm(lang==='it'?`Eliminare la sessione "${s.name}"?`:`Delete session "${s.name}"?`)) return;
+  persistSessions(loadSessions().filter(x=>x.id!==id));
+  renderSessions();
+  toast(lang==='it'?'Sessione eliminata.':'Session deleted.');
+}
+
+function renderSessions(){
+  const list=$('sessionList'); list.innerHTML='';
+  const sessions=loadSessions();
+  for(const s of sessions){
+    const row=document.createElement('div'); row.className='sess';
+    const info=document.createElement('div'); info.className='info';
+    const nm=document.createElement('div'); nm.className='nm'; nm.textContent=s.name;
+    const mt=document.createElement('div'); mt.className='mt';
+    mt.textContent=`${s.keyName} · ${s.notes.length} ${lang==='it'?'note':'notes'} · ${new Date(s.created).toLocaleDateString()}`;
+    info.appendChild(nm); info.appendChild(mt);
+    const load=document.createElement('button'); load.className='load'; load.textContent=lang==='it'?'Apri':'Open';
+    load.addEventListener('click',()=>loadSession(s.id));
+    const del=document.createElement('button'); del.className='del'; del.textContent=lang==='it'?'Elimina':'Delete';
+    del.addEventListener('click',()=>deleteSession(s.id));
+    row.appendChild(info); row.appendChild(load); row.appendChild(del);
+    list.appendChild(row);
+  }
+}
+$('saveBtn').addEventListener('click',saveCurrentSession);
+renderSessions();
+
+// mic toggle button
+$('micBtn').addEventListener('click',async()=>{
+  if(running){stopMic();}
+  else{const r=await startMic(); if(r!==true){} }
+});
+
+// hide UI
+let uiHidden=false;
+function setUIHidden(h){
+  uiHidden=h;
+  $('topbar').classList.toggle('hidden',h);
+  $('ribbonWrap').classList.toggle('hidden',h && !$('swRibbon').classList.contains('on')?true:h);
+  $('panel').classList.remove('open');
+}
+// keep ribbon visible even when chrome hidden (it's part of the "show"); we only hide top bar + panel
+function hideChrome(h){
+  uiHidden=h;
+  $('topbar').classList.toggle('hidden',h);
+  if(h)setPanel(false);
+}
+document.addEventListener('keydown',e=>{
+  const t=e.target;
+  if(t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA'||t.isContentEditable)) return;
+  if(e.key===' '||e.code==='Space'){
+    if(t&&t.tagName==='BUTTON') return;   // let the focused button handle its own activation
+    e.preventDefault(); registerSpace(); return;
+  }
+  if(e.key==='Backspace'){ e.preventDefault(); undoLast(); return; }
+  if(e.key==='h'||e.key==='H'){hideChrome(!uiHidden);}
+  if(e.key==='f'||e.key==='F'){$('fsBtn').click();}
+});
+
+// The top bar stays visible while you work. Press H to hide it for a clean
+// recording, and H again to bring it back. No automatic hiding.
+function bumpActivity(){}
+
+/* ============ START OVERLAY ============ */
+$('startBtn').addEventListener('click',async()=>{
+  $('startErr').textContent='';
+  const r=await startMic();
+  if(r===true){
+    $('start').classList.add('gone');
+    bumpActivity();
+  }else{
+    const msg = (r&&r.name==='NotAllowedError')
+      ? (lang==='it'?'Permesso microfono negato. Consentilo nel browser e riprova.':'Microphone blocked. Allow it in the browser and retry.')
+      : (lang==='it'?'Microfono non disponibile. Controlla che nessun\'altra app lo stia usando.':'Microphone unavailable. Check no other app is using it.');
+    $('startErr').textContent=msg;
+  }
+});
+</script>
+</body>
+</html>
