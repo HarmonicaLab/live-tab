@@ -475,36 +475,24 @@ const BASE = [
   {off:30, tab:"9'",   type:'bend'},
   {off:35, tab:"10'",  type:'bend'},
   {off:34, tab:"10''", type:'bend'},
-  // ── OVERBLOWS (fori 1-6) ──
-  // Nota un semitono sopra il blow, raggiungibile col labbro superiore
-  {off:1,  tab:'OB1',  type:'overblow'},  // C → C# (in C)
-  {off:5,  tab:'OB2',  type:'overblow'},  // E → F
-  {off:8,  tab:'OB3',  type:'overblow'},  // G → G#
-  {off:13, tab:'OB4',  type:'overblow'},  // C → C#
-  {off:18, tab:'OB5',  type:'overblow'},  // E → F
-  {off:20, tab:'OB6',  type:'overblow'},  // G → G#
-  // ── OVERDRAWS (fori 7-10) ──
-  // Nota un semitono sopra il draw
-  {off:25, tab:'OD7',  type:'overdraw'},  // B → C
-  {off:29, tab:'OD8',  type:'overdraw'},  // wait — off:29 is -9; OD8 draw=26+1=27
-  {off:32, tab:'OD9',  type:'overdraw'},
-  {off:37, tab:'OD10', type:'overdraw'},
+  // ── OVERBLOWS — note rosse sopra nello schema (in C, root=60) ──
+  // foro1: blow=C4(60)  → OB=Eb4(63)  off+3
+  // foro4: blow=C5(72)  → OB=Eb5(75)  off+15
+  // foro5: blow=E5(76)  → OB=Gb5(78)  off+18
+  // foro6: blow=G5(79)  → OB=Bb5(82)  off+22
+  {off:3,  tab:'OB1',  type:'overblow'},
+  {off:15, tab:'OB4',  type:'overblow'},
+  {off:18, tab:'OB5',  type:'overblow'},
+  {off:22, tab:'OB6',  type:'overblow'},
+  // ── OVERDRAWS — note rosse sotto nello schema (in C, root=60) ──
+  // foro7:  draw=B4(71)  → OD=Db5(73)  off+13
+  // foro9:  draw=F5(77)  → OD=Ab5(80)  off+20
+  // foro10: draw=A5(81)  → OD=Db6(85)  off+25
+  {off:13, tab:'OD7',  type:'overdraw'},
+  {off:20, tab:'OD9',  type:'overdraw'},
+  {off:25, tab:'OD10', type:'overdraw'},
 ];
 
-// Fix offset overdraws: draw offsets sono 26,29,33 per fori 8,9,10
-// OD = draw+1 semitono
-// foro8 draw=off26 → OD8=off27
-// foro9 draw=off29 → OD9=off30... ma off30 è già "9'" blow bend
-// Usiamo offset corretti dalla tabella Richter standard in C:
-// hole7 draw=B4(71), OD7=C5(72)=off24... conflitto con blow7
-// Gli overdraws producono note che NON esistono nei bends normali,
-// quindi usiamo offset precisi:
-// In C: OD7→C5(72,off24), OD8→Bb4(70,off22 — no conflict), OD9→Ab4... 
-// Definiamo separatamente con le note MIDI assolute in C:
-// OD7: draw7=B4=71, OD7=C5=72 → off=72-60=12... conflitto blow4
-// Questo mostra che OD su armoniche diatoniche richiede gestione speciale
-// per evitare ambiguità con le note già esistenti.
-// Per ora manteniamo i tab label distintivi (OD7 ecc.) con toleranza ridotta.
 
 const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 function midiToName(m){const r=Math.round(m);return NOTE_NAMES[((r%12)+12)%12]+(Math.floor(r/12)-1);}
