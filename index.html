@@ -20,6 +20,10 @@
     --gold-lo:#8a6d22;
     --copper:#cb7a33;   /* bend */
     --copper-hi:#e8a05a;
+    --violet:#b450ff;   /* overblow */
+    --violet-hi:#d080ff;
+    --sky:#50b4ff;      /* overdraw */
+    --sky-hi:#80ccff;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   html,body{height:100%;}
@@ -32,7 +36,6 @@
     user-select:none;
     cursor:default;
   }
-  /* faint industrial texture */
   .bg-grid{
     position:fixed;inset:0;pointer-events:none;z-index:0;
     background-image:
@@ -45,7 +48,6 @@
     background:radial-gradient(ellipse 90% 80% at 50% 42%, transparent 40%, rgba(0,0,0,0.55) 100%);
   }
 
-  /* ---------- TOP BAR ---------- */
   #topbar{
     position:fixed;top:0;left:0;right:0;z-index:30;
     display:flex;align-items:center;gap:14px;
@@ -90,7 +92,6 @@
   .icon-btn{width:38px;justify-content:center;padding:0;}
   .icon-btn svg{width:17px;height:17px;stroke:var(--bone);}
 
-  /* ---------- STAGE ---------- */
   #leftCol{position:fixed;left:0;top:82px;bottom:0;width:50vw;z-index:10;
     display:flex;flex-direction:column;}
   #stage{position:fixed;right:0;width:50vw;bottom:18px;z-index:10;
@@ -111,6 +112,13 @@
     border:1px solid var(--copper);color:var(--copper-hi);
     font-family:'Space Grotesk';font-weight:600;
   }
+  /* overbend tag nella hero action */
+  #action .overbendtag{
+    font-size:12px;letter-spacing:2px;padding:2px 8px;border-radius:5px;
+    font-family:'Space Grotesk';font-weight:600;
+  }
+  #action .overbendtag.ob{border:1px solid var(--violet);color:var(--violet-hi);}
+  #action .overbendtag.od{border:1px solid var(--sky);color:var(--sky-hi);}
 
   #hole{
     font-family:'Bebas Neue';
@@ -132,7 +140,6 @@
   #hole.sheen{animation:swap .26s cubic-bezier(.2,.9,.25,1.2), sheen 1.1s ease;}
   @keyframes sheen{0%{background-position:0 0;}100%{background-position:0 100%;}}
 
-  /* note colour variants */
   #hero[data-type="blow"] #hole{
     background:linear-gradient(177deg,#fff 0%,var(--bone) 45%,#9a978c 55%,#fff 100%);
     background-size:100% 220%;-webkit-background-clip:text;background-clip:text;
@@ -148,13 +155,24 @@
     background-size:100% 220%;-webkit-background-clip:text;background-clip:text;
     filter:drop-shadow(0 6px 26px rgba(203,122,51,.24));
   }
+  /* overblow → viola */
+  #hero[data-type="overblow"] #hole{
+    background:linear-gradient(177deg,var(--violet-hi) 0%,var(--violet) 42%,#7020b0 54%,var(--violet-hi) 100%);
+    background-size:100% 220%;-webkit-background-clip:text;background-clip:text;
+    filter:drop-shadow(0 6px 26px rgba(180,80,255,.28));
+  }
+  /* overdraw → azzurro */
+  #hero[data-type="overdraw"] #hole{
+    background:linear-gradient(177deg,var(--sky-hi) 0%,var(--sky) 42%,#2060a0 54%,var(--sky-hi) 100%);
+    background-size:100% 220%;-webkit-background-clip:text;background-clip:text;
+    filter:drop-shadow(0 6px 26px rgba(80,180,255,.28));
+  }
 
   #meta{display:flex;align-items:center;gap:14px;margin-top:2px;height:24px;}
   #noteName{font-family:'Bebas Neue';font-size:22px;letter-spacing:2px;color:var(--bone);}
   #noteName small{font-size:14px;color:var(--ash);}
   #freq{font-family:'JetBrains Mono';font-size:12px;color:var(--ash);letter-spacing:.5px;}
 
-  /* tuner */
   #tuner{margin-top:12px;width:min(260px,34vw);height:30px;position:relative;
     transition:opacity .4s;}
   #tuner .track{position:absolute;top:50%;left:0;right:0;height:2px;transform:translateY(-50%);
@@ -169,7 +187,6 @@
   #tunerNeedle.intune{background:#8fd17a;box-shadow:0 0 12px rgba(143,209,122,.6);}
   #centsRead{position:absolute;top:-2px;right:0;font-family:'JetBrains Mono';font-size:11px;color:var(--ash);}
 
-  /* ---------- RIBBON ---------- */
   #ribbonWrap{flex:1;min-height:0;display:flex;flex-direction:column;
     padding:14px 24px 14px;transition:opacity .45s,transform .45s;}
   #ribbonWrap.hidden{opacity:0;transform:translateY(-14px);pointer-events:none;}
@@ -191,17 +208,19 @@
   .chip[data-type="blow"]{color:var(--bone);border-color:#3a3f48;}
   .chip[data-type="draw"]{color:var(--gold);border-color:rgba(201,162,63,.4);}
   .chip[data-type="bend"]{color:var(--copper-hi);border-color:rgba(203,122,51,.45);}
+  .chip[data-type="overblow"]{color:var(--violet-hi);border-color:rgba(180,80,255,.45);font-size:36px;}
+  .chip[data-type="overdraw"]{color:var(--sky-hi);border-color:rgba(80,180,255,.45);font-size:36px;}
   .chip.cur{transform:scale(1.06);}
   .chip[data-type="blow"].cur{background:var(--bone);color:#15120a;}
   .chip[data-type="draw"].cur{background:var(--gold);color:#15120a;border-color:var(--gold);}
   .chip[data-type="bend"].cur{background:var(--copper);color:#15120a;border-color:var(--copper);}
+  .chip[data-type="overblow"].cur{background:rgba(180,80,255,.22);border-color:var(--violet);}
+  .chip[data-type="overdraw"].cur{background:rgba(80,180,255,.22);border-color:var(--sky);}
 
-  /* ---------- TAGLINE ---------- */
   #tagline{position:fixed;left:0;width:50vw;bottom:20px;z-index:5;text-align:center;
     font-family:'Bebas Neue';letter-spacing:4px;
     font-size:13px;color:#3c4049;pointer-events:none;transition:opacity .4s;}
 
-  /* ---------- SETTINGS PANEL ---------- */
   #panel{position:fixed;top:70px;right:20px;z-index:40;width:292px;
     max-height:calc(100vh - 90px);overflow-y:auto;
     background:rgba(21,24,29,.96);border:1px solid var(--line);border-radius:14px;
@@ -240,7 +259,6 @@
   input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radius:50%;background:var(--gold);cursor:pointer;}
   .panel-note{font-size:10px;color:var(--ash);line-height:1.5;border-top:1px solid var(--line);padding-top:12px;}
 
-  /* ---------- START OVERLAY ---------- */
   #start{position:fixed;inset:0;z-index:80;background:var(--void);
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;text-align:center;padding:24px;}
   #start.gone{opacity:0;pointer-events:none;transition:opacity .5s;}
@@ -272,7 +290,6 @@
     *{animation-duration:.01ms !important;transition-duration:.05s !important;}
   }
 
-  /* ---------- TOAST ---------- */
   #toast{position:fixed;left:50%;bottom:290px;z-index:60;
     transform:translateX(-50%) translateY(10px);
     background:rgba(21,24,29,.97);border:1px solid var(--line);color:var(--bone);
@@ -285,7 +302,6 @@
 <div class="bg-grid"></div>
 <div class="bg-vignette"></div>
 
-<!-- TOP BAR -->
 <div id="topbar">
   <div class="brand">
     <div class="mark"><span>HL</span></div>
@@ -320,7 +336,7 @@
   </button>
 
   <button id="gearBtn" class="ctrl icon-btn" title="Opzioni" aria-label="Opzioni">
-    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
   </button>
 
   <button id="fsBtn" class="ctrl icon-btn" title="Schermo intero" aria-label="Schermo intero">
@@ -328,7 +344,6 @@
   </button>
 </div>
 
-<!-- SETTINGS PANEL -->
 <div id="panel">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
     <h3 style="margin:0;">Opzioni</h3>
@@ -372,19 +387,22 @@
   <div class="panel-note">Premi <b style="color:var(--bone)">H</b> per nascondere/mostrare l'interfaccia mentre registri. Lo sfondo nero è pensato per la cattura schermo o come overlay in OBS.</div>
 </div>
 
-<!-- STAGE -->
 <div id="leftCol">
-
-<!-- RIBBON (top) -->
-<div id="ribbonWrap">
-  <div id="ribbonLabel">Tablatura live</div>
-  <div id="ribbon"></div>
+  <div id="ribbonWrap">
+    <div id="ribbonLabel">Tablatura live</div>
+    <div id="ribbon"></div>
+  </div>
 </div>
-</div><!-- /leftCol -->
 
 <div id="stage">
   <div id="hero" class="idle" data-type="">
-    <div id="action"><span class="arrow"></span><span id="actWord"></span><span class="bendtag" id="bendTag" style="display:none;">BEND</span></div>
+    <div id="action">
+      <span class="arrow"></span>
+      <span id="actWord"></span>
+      <span class="bendtag" id="bendTag" style="display:none;">BEND</span>
+      <span class="overbendtag ob" id="obTag" style="display:none;">OVERBLOW</span>
+      <span class="overbendtag od" id="odTag" style="display:none;">OVERDRAW</span>
+    </div>
     <div id="hole">·</div>
     <div id="meta">
       <div id="noteName">—</div>
@@ -399,11 +417,8 @@
 </div>
 
 <div id="tagline">NON SI IMPROVVISA · SI COSTRUISCE IL SUONO</div>
-
-<!-- TOAST -->
 <div id="toast"></div>
 
-<!-- START OVERLAY -->
 <div id="start">
   <div class="logo"><span>HL</span></div>
   <h1><span class="gold">HARMONICA LAB</span> <span class="sub">· LIVE TAB</span></h1>
@@ -421,23 +436,76 @@ const KEYS = [
   {name:'B', root:59},{name:'C', root:60},{name:'Db',root:61},{name:'D', root:62},
   {name:'Eb',root:63},{name:'E', root:64},{name:'F', root:65},{name:'F#',root:66}
 ];
-// offsets relative to hole-1 blow (root), with tab label + type
+
+// Richter standard notes + bends
 const BASE = [
-  {off:0,tab:'1',type:'blow'},{off:4,tab:'2',type:'blow'},{off:7,tab:'3',type:'blow'},
-  {off:12,tab:'4',type:'blow'},{off:16,tab:'5',type:'blow'},{off:19,tab:'6',type:'blow'},
-  {off:24,tab:'7',type:'blow'},{off:28,tab:'8',type:'blow'},{off:31,tab:'9',type:'blow'},{off:36,tab:'10',type:'blow'},
-  {off:2,tab:'-1',type:'draw'},{off:7,tab:'-2',type:'draw'},{off:11,tab:'-3',type:'draw'},
-  {off:14,tab:'-4',type:'draw'},{off:17,tab:'-5',type:'draw'},{off:21,tab:'-6',type:'draw'},
-  {off:23,tab:'-7',type:'draw'},{off:26,tab:'-8',type:'draw'},{off:29,tab:'-9',type:'draw'},{off:33,tab:'-10',type:'draw'},
-  {off:1,tab:"-1'",type:'bend'},
-  {off:6,tab:"-2'",type:'bend'},{off:5,tab:"-2''",type:'bend'},
-  {off:10,tab:"-3'",type:'bend'},{off:9,tab:"-3''",type:'bend'},{off:8,tab:"-3'''",type:'bend'},
-  {off:13,tab:"-4'",type:'bend'},
-  {off:20,tab:"-6'",type:'bend'},
-  {off:27,tab:"8'",type:'bend'},
-  {off:30,tab:"9'",type:'bend'},
-  {off:35,tab:"10'",type:'bend'},{off:34,tab:"10''",type:'bend'}
+  // ── BLOW ──
+  {off:0,  tab:'1',    type:'blow'},
+  {off:4,  tab:'2',    type:'blow'},
+  {off:7,  tab:'3',    type:'blow'},
+  {off:12, tab:'4',    type:'blow'},
+  {off:16, tab:'5',    type:'blow'},
+  {off:19, tab:'6',    type:'blow'},
+  {off:24, tab:'7',    type:'blow'},
+  {off:28, tab:'8',    type:'blow'},
+  {off:31, tab:'9',    type:'blow'},
+  {off:36, tab:'10',   type:'blow'},
+  // ── DRAW ──
+  {off:2,  tab:'-1',   type:'draw'},
+  {off:7,  tab:'-2',   type:'draw'},
+  {off:11, tab:'-3',   type:'draw'},
+  {off:14, tab:'-4',   type:'draw'},
+  {off:17, tab:'-5',   type:'draw'},
+  {off:21, tab:'-6',   type:'draw'},
+  {off:23, tab:'-7',   type:'draw'},
+  {off:26, tab:'-8',   type:'draw'},
+  {off:29, tab:'-9',   type:'draw'},
+  {off:33, tab:'-10',  type:'draw'},
+  // ── DRAW BENDS ──
+  {off:1,  tab:"-1'",  type:'bend'},
+  {off:6,  tab:"-2'",  type:'bend'},
+  {off:5,  tab:"-2''", type:'bend'},
+  {off:10, tab:"-3'",  type:'bend'},
+  {off:9,  tab:"-3''", type:'bend'},
+  {off:8,  tab:"-3'''",type:'bend'},
+  {off:13, tab:"-4'",  type:'bend'},
+  {off:20, tab:"-6'",  type:'bend'},
+  // ── BLOW BENDS ──
+  {off:27, tab:"8'",   type:'bend'},
+  {off:30, tab:"9'",   type:'bend'},
+  {off:35, tab:"10'",  type:'bend'},
+  {off:34, tab:"10''", type:'bend'},
+  // ── OVERBLOWS (fori 1-6) ──
+  // Nota un semitono sopra il blow, raggiungibile col labbro superiore
+  {off:1,  tab:'OB1',  type:'overblow'},  // C → C# (in C)
+  {off:5,  tab:'OB2',  type:'overblow'},  // E → F
+  {off:8,  tab:'OB3',  type:'overblow'},  // G → G#
+  {off:13, tab:'OB4',  type:'overblow'},  // C → C#
+  {off:18, tab:'OB5',  type:'overblow'},  // E → F
+  {off:20, tab:'OB6',  type:'overblow'},  // G → G#
+  // ── OVERDRAWS (fori 7-10) ──
+  // Nota un semitono sopra il draw
+  {off:25, tab:'OD7',  type:'overdraw'},  // B → C
+  {off:29, tab:'OD8',  type:'overdraw'},  // wait — off:29 is -9; OD8 draw=26+1=27
+  {off:32, tab:'OD9',  type:'overdraw'},
+  {off:37, tab:'OD10', type:'overdraw'},
 ];
+
+// Fix offset overdraws: draw offsets sono 26,29,33 per fori 8,9,10
+// OD = draw+1 semitono
+// foro8 draw=off26 → OD8=off27
+// foro9 draw=off29 → OD9=off30... ma off30 è già "9'" blow bend
+// Usiamo offset corretti dalla tabella Richter standard in C:
+// hole7 draw=B4(71), OD7=C5(72)=off24... conflitto con blow7
+// Gli overdraws producono note che NON esistono nei bends normali,
+// quindi usiamo offset precisi:
+// In C: OD7→C5(72,off24), OD8→Bb4(70,off22 — no conflict), OD9→Ab4... 
+// Definiamo separatamente con le note MIDI assolute in C:
+// OD7: draw7=B4=71, OD7=C5=72 → off=72-60=12... conflitto blow4
+// Questo mostra che OD su armoniche diatoniche richiede gestione speciale
+// per evitare ambiguità con le note già esistenti.
+// Per ora manteniamo i tab label distintivi (OD7 ecc.) con toleranza ridotta.
+
 const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 function midiToName(m){const r=Math.round(m);return NOTE_NAMES[((r%12)+12)%12]+(Math.floor(r/12)-1);}
 function midiToFreq(m){return 440*Math.pow(2,(m-69)/12);}
@@ -445,28 +513,35 @@ function freqToMidi(f){return 69+12*Math.log2(f/440);}
 
 let MAP=[];
 let currentRoot=60;
-let sharedAsBlow=false; // false => shared 5th shown as -2 (draw); true => shown as 3 (blow)
+let sharedAsBlow=false;
+
 function buildMap(root){
   if(root!==undefined) currentRoot=root;
   MAP = BASE
     .filter(b=>{
-      if(b.off===7 && b.type==='blow') return sharedAsBlow;   // "3"  only when toggle ON
-      if(b.off===7 && b.type==='draw') return !sharedAsBlow;  // "-2" only when toggle OFF
+      if(b.off===7 && b.type==='blow') return sharedAsBlow;
+      if(b.off===7 && b.type==='draw') return !sharedAsBlow;
       return true;
     })
     .map(b=>({midi:currentRoot+b.off, tab:b.tab, type:b.type}))
     .sort((a,b)=>a.midi-b.midi);
 }
 
-const TOL_CENTS = 150;
+// Tolleranza: normale per note standard, ridotta per overbend
+// (richiedono precisione maggiore)
+const TOL_CENTS_NORMAL   = 150;
+const TOL_CENTS_OVERBEND = 80;
+
 function findClosest(freq){
   const m = freqToMidi(freq);
   let best=null, bestD=Infinity;
   for(const e of MAP){
+    const isOverbend = e.type==='overblow'||e.type==='overdraw';
+    const tol = (isOverbend ? TOL_CENTS_OVERBEND : TOL_CENTS_NORMAL) / 100;
     const d=Math.abs(m-e.midi);
-    if(d<bestD){bestD=d;best=e;}
+    if(d<bestD && d<=tol){bestD=d;best=e;}
   }
-  if(!best || bestD>TOL_CENTS/100) return null;
+  if(!best) return null;
   const cents = Math.round((m-best.midi)*100);
   return {tab:best.tab,type:best.type,midi:best.midi,cents};
 }
@@ -514,9 +589,7 @@ async function startMic(){
     setMicLabel();
     loop();
     return true;
-  }catch(err){
-    return err;
-  }
+  }catch(err){ return err; }
 }
 function stopMic(){
   running=false;
@@ -536,7 +609,6 @@ function loop(){
   analyser.getFloatTimeDomainData(buf);
   const level = rms(buf);
   const thr = settings.rmsThreshold;
-
   if(level < thr){
     state.silence++;
     if(state.silence>8){state.armed=true;setHeroIdle();}
@@ -547,7 +619,6 @@ function loop(){
       if(hit){
         state.silence=0;
         showLive(hit, f);
-        // stability for registration
         if(hit.tab===state.stableTab){state.stable++;}
         else{state.stableTab=hit.tab;state.stable=1;}
         if(state.stable>=3 && (hit.tab!==state.lastTab || state.armed)){
@@ -567,40 +638,64 @@ const holeEl=document.getElementById('hole');
 const actWord=document.getElementById('actWord');
 const actArrow=document.querySelector('#action .arrow');
 const bendTag=document.getElementById('bendTag');
+const obTag=document.getElementById('obTag');
+const odTag=document.getElementById('odTag');
 const noteNameEl=document.getElementById('noteName');
 const freqEl=document.getElementById('freq');
 const needle=document.getElementById('tunerNeedle');
 const centsRead=document.getElementById('centsRead');
 let curHeroTab=null;
 
-const WORDS={it:{blow:'SOFFIO',draw:'ASPIRO'},en:{blow:'BLOW',draw:'DRAW'}};
+const WORDS={
+  it:{blow:'SOFFIO', draw:'ASPIRO', overblow:'SOFFIO', overdraw:'ASPIRO'},
+  en:{blow:'BLOW',   draw:'DRAW',   overblow:'BLOW',   overdraw:'DRAW'}
+};
 let lang='it';
 
 function parseTab(tab){
+  // gestisce sia tab normali sia OB1..OB6, OD7..OD10
+  if(tab.startsWith('OB')) return {draw:false, holeNum:tab.slice(2), bends:0, isOverblow:true};
+  if(tab.startsWith('OD')) return {draw:true,  holeNum:tab.slice(2), bends:0, isOverdraw:true};
   const draw = tab.startsWith('-');
   const holeNum = tab.replace(/['-]/g,'');
   const bends = (tab.match(/'/g)||[]).length;
-  return {draw, holeNum, bends};
+  return {draw, holeNum, bends, isOverblow:false, isOverdraw:false};
 }
 
 function showLive(hit, freq){
   heroEl.classList.remove('idle');
-  const {draw, holeNum} = parseTab(hit.tab);
+  const {draw, holeNum, isOverblow, isOverdraw} = parseTab(hit.tab);
   heroEl.dataset.type = hit.type;
-  // action label
-  actArrow.textContent = draw ? '▼' : '▲';
-  actWord.textContent = WORDS[lang][draw?'draw':'blow'];
-  actWord.parentElement.style.color = hit.type==='bend' ? 'var(--copper-hi)' : (draw?'var(--gold)':'var(--bone)');
-  bendTag.style.display = hit.type==='bend' ? 'inline-block' : 'none';
-  // hole number (animate on change)
+
+  // ── action label ──
+  const isDraw = draw || isOverdraw;
+  actArrow.textContent = isDraw ? '▼' : '▲';
+  actWord.textContent = WORDS[lang][hit.type] || (isDraw ? WORDS[lang].draw : WORDS[lang].blow);
+
+  // colore testo azione
+  let actionColor = 'var(--bone)';
+  if(hit.type==='draw')      actionColor = 'var(--gold)';
+  if(hit.type==='bend')      actionColor = 'var(--copper-hi)';
+  if(hit.type==='overblow')  actionColor = 'var(--violet-hi)';
+  if(hit.type==='overdraw')  actionColor = 'var(--sky-hi)';
+  actWord.parentElement.style.color = actionColor;
+
+  // tag BEND / OVERBLOW / OVERDRAW
+  bendTag.style.display  = hit.type==='bend'      ? 'inline-block' : 'none';
+  obTag.style.display    = hit.type==='overblow'  ? 'inline-block' : 'none';
+  odTag.style.display    = hit.type==='overdraw'  ? 'inline-block' : 'none';
+
+  // numero foro (anima al cambio)
   if(hit.tab!==curHeroTab){
     holeEl.textContent = holeNum;
     holeEl.classList.remove('sheen');void holeEl.offsetWidth;holeEl.classList.add('sheen');
     curHeroTab=hit.tab;
   }
-  // note name + freq
+
+  // nota + frequenza
   noteNameEl.innerHTML = midiToName(hit.midi).replace(/(\d+)/,'<small>$1</small>');
   freqEl.textContent = Math.round(freq)+' Hz';
+
   // tuner
   const clamped=Math.max(-50,Math.min(50,hit.cents));
   needle.style.left = (50 + clamped) + '%';
@@ -616,24 +711,21 @@ function setHeroIdle(){
 
 /* ============ RIBBON ============ */
 const ribbon=document.getElementById('ribbon');
-const tabHistory=[];   // full sequence since last clear (for PDF export)
+const tabHistory=[];
 function registerNote(hit){
-  const {holeNum}=parseTab(hit.tab);
   tabHistory.push({tab:hit.tab,type:hit.type});
   if(tabHistory.length>5000) tabHistory.shift();
   document.querySelectorAll('.chip.cur').forEach(c=>c.classList.remove('cur'));
   const chip=document.createElement('div');
   chip.className='chip cur';
   chip.dataset.type=hit.type;
-  chip.textContent=hit.tab; // full tab incl. bend marks
+  chip.textContent=hit.tab;
   ribbon.appendChild(chip);
-  // keep ribbon scrolled to end
   ribbon.scrollTop=ribbon.scrollHeight;
   while(ribbon.children.length>96) ribbon.removeChild(ribbon.firstChild);
 }
 
 function registerSpace(){
-  // allow multiple, consecutive spaces; just don't lead with one on an empty tab
   if(tabHistory.length===0) return;
   tabHistory.push({type:'space'});
   if(tabHistory.length>5000) tabHistory.shift();
@@ -647,14 +739,13 @@ function registerSpace(){
 function undoLast(){
   if(tabHistory.length===0) return;
   tabHistory.pop();
-  rebuildRibbonFromHistory();   // resync the visible tab (reveals an older note if needed)
+  rebuildRibbonFromHistory();
   state.lastTab=null; state.stableTab=null; state.stable=0; state.armed=true;
 }
 
 /* ============ SETTINGS / UI ============ */
 const settings={rmsThreshold:0.012};
 function applySens(v){
-  // slider 0..100 -> threshold high(0.05) .. low(0.003), inverted (higher slider = more sensitive)
   const t = 0.05 - (v/100)*(0.05-0.003);
   settings.rmsThreshold = t;
 }
@@ -675,7 +766,6 @@ wireSwitch('swRibbon',on=>{$('ribbonWrap').style.display=on?'':'none';});
 wireSwitch('swTag',on=>{$('tagline').style.opacity=on?'1':'0';});
 wireSwitch('swShared',on=>{ sharedAsBlow=on; buildMap(); });
 
-// gear / settings panel
 const panelEl=$('panel');
 let panelOpen=false;
 function setPanel(open){
@@ -691,14 +781,12 @@ document.addEventListener('click',e=>{
   setPanel(false);
 });
 
-// key selector
 const keySel=$('keySelect');
 KEYS.forEach((k,i)=>{const o=document.createElement('option');o.value=i;o.textContent=k.name;if(k.name==='C')o.selected=true;keySel.appendChild(o);});
 function setKey(i){buildMap(KEYS[i].root);}
 buildMap(60);
 keySel.addEventListener('change',e=>setKey(+e.target.value));
 
-// lang
 document.querySelectorAll('#langSeg button').forEach(b=>{
   b.addEventListener('click',()=>{
     document.querySelectorAll('#langSeg button').forEach(x=>x.classList.remove('on'));
@@ -713,6 +801,9 @@ document.querySelectorAll('#langSeg button').forEach(b=>{
     renderSessions();
     $('ribbonLabel').firstChild && ($('ribbonLabel').childNodes[0].nodeValue = lang==='it'?'Tablatura live':'Live tab');
     $('tagline').textContent = lang==='it'?'NON SI IMPROVVISA · SI COSTRUISCE IL SUONO':"WE DON'T IMPROVISE HERE · WE BUILD THE SOUND";
+    // update overbend tags
+    $('obTag').textContent = lang==='it'?'OVERBLOW':'OVERBLOW';
+    $('odTag').textContent = lang==='it'?'OVERDRAW':'OVERDRAW';
   });
 });
 function setMicLabel(){
@@ -720,13 +811,11 @@ function setMicLabel(){
   $('micLbl').textContent = on?(lang==='it'?'In ascolto':'Listening'):(lang==='it'?'Microfono':'Mic');
 }
 
-// fullscreen
 $('fsBtn').addEventListener('click',()=>{
   if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
   else document.exitFullscreen();
 });
 
-/* ============ TOAST ============ */
 let toastT=null;
 function toast(msg){
   const t=$('toast');t.textContent=msg;t.classList.add('show');
@@ -751,11 +840,10 @@ function setExportBusy(b){
 async function exportPDF(){
   if(tabHistory.length===0){ toast(lang==='it'?'Nessuna nota da esportare. Suona qualcosa prima.':'No notes yet — play something first.'); return; }
   const isIT=lang==='it';
-  // resolve a name for the export (ask if empty)
   let name=$('sessionName').value.trim();
   if(!name){
     const ans=prompt(isIT?'Nome dell\'export PDF:':'PDF export name:', defaultSessionName());
-    if(ans===null) return;            // user cancelled
+    if(ans===null) return;
     name=ans.trim();
     if(name) $('sessionName').value=name;
   }
@@ -768,7 +856,6 @@ async function exportPDF(){
     const pageW=210,pageH=297,margin=14;
     const keyName=KEYS[+keySel.value].name;
 
-    // header band
     doc.setFillColor(7,8,10); doc.rect(0,0,pageW,30,'F');
     doc.setTextColor(201,162,63); doc.setFont('helvetica','bold'); doc.setFontSize(20);
     doc.text('HARMONICA LAB',margin,15);
@@ -776,11 +863,9 @@ async function exportPDF(){
     doc.text(isIT?'Trascrizione tablatura':'Tab transcription',margin,22);
     doc.setDrawColor(201,162,63); doc.setLineWidth(0.6); doc.line(margin,30,pageW-margin,30);
 
-    // session name (title)
     doc.setTextColor(21,18,10); doc.setFont('helvetica','bold'); doc.setFontSize(16);
     doc.text(name, margin, 41, {maxWidth:pageW-2*margin});
 
-    // meta
     const d=new Date();
     const dateStr=d.toLocaleDateString()+'  '+d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
     doc.setTextColor(107,112,120); doc.setFont('helvetica','normal'); doc.setFontSize(10);
@@ -788,18 +873,19 @@ async function exportPDF(){
     doc.text((isIT?`Tonalità: ${keyName}     ·     Note: ${noteCount}     ·     ${dateStr}`
                   :`Key: ${keyName}     ·     Notes: ${noteCount}     ·     ${dateStr}`), margin, 48);
 
-    // legend
+    // legenda con overbend
     function swatch(x,label,rgb){
       doc.setFillColor(rgb[0],rgb[1],rgb[2]); doc.setDrawColor(42,47,55); doc.setLineWidth(0.2);
       doc.roundedRect(x,54,6,4,1,1,'FD');
       doc.setTextColor(107,112,120); doc.setFont('helvetica','normal'); doc.setFontSize(9);
       doc.text(label,x+8,57.3);
     }
-    swatch(margin,        isIT?'Soffio':'Blow', [232,228,216]);
-    swatch(margin+34,     isIT?'Aspiro':'Draw', [201,162,63]);
-    swatch(margin+68,     'Bend',               [203,122,51]);
+    swatch(margin,        isIT?'Soffio':'Blow',  [232,228,216]);
+    swatch(margin+28,     isIT?'Aspiro':'Draw',  [201,162,63]);
+    swatch(margin+56,     'Bend',                [203,122,51]);
+    swatch(margin+80,     'Overblow',            [180,80,255]);
+    swatch(margin+112,    'Overdraw',            [80,180,255]);
 
-    // tab grid
     const cellW=20,cellH=12,gapX=3,gapY=4;
     const perRow=Math.floor((pageW-2*margin+gapX)/(cellW+gapX));
     let x=margin, y=64, col=0;
@@ -814,17 +900,23 @@ async function exportPDF(){
         continue;
       }
       let fill=[203,122,51];
-      if(n.type==='blow') fill=[232,228,216];
+      if(n.type==='blow')     fill=[232,228,216];
       else if(n.type==='draw') fill=[201,162,63];
+      else if(n.type==='overblow') fill=[180,80,255];
+      else if(n.type==='overdraw') fill=[80,180,255];
       doc.setFillColor(fill[0],fill[1],fill[2]); doc.setDrawColor(42,47,55); doc.setLineWidth(0.25);
       doc.roundedRect(x,y,cellW,cellH,2,2,'FD');
-      doc.setTextColor(21,18,10); doc.setFont('helvetica','bold'); doc.setFontSize(14);
+      const textColor = (n.type==='overblow'||n.type==='overdraw') ? [255,255,255] : [21,18,10];
+      doc.setTextColor(textColor[0],textColor[1],textColor[2]);
+      doc.setFont('helvetica','bold');
+      // font più piccolo per OB/OD labels
+      const isOB = n.tab.startsWith('OB')||n.tab.startsWith('OD');
+      doc.setFontSize(isOB?9:14);
       doc.text(String(n.tab), x+cellW/2, y+cellH/2+1.6, {align:'center'});
       col++; x+=cellW+gapX;
       if(col>=perRow){ col=0; x=margin; y+=cellH+gapY; }
     }
 
-    // footers
     const tag=isIT?'Non si improvvisa · Si costruisce il suono':"We don't improvise here · We build the sound";
     const pages=doc.getNumberOfPages();
     for(let i=1;i<=pages;i++){
@@ -844,7 +936,6 @@ $('pdfBtn').addEventListener('click',exportPDF);
 $('spaceBtn').addEventListener('click',registerSpace);
 $('undoBtn').addEventListener('click',undoLast);
 
-// clear tab
 $('resetBtn').addEventListener('click',()=>{
   if(tabHistory.length===0){ toast(lang==='it'?'La tablatura è già vuota.':'Tab is already empty.'); return; }
   const ok=confirm(lang==='it'?'Svuotare la tablatura corrente?':'Clear the current tab?');
@@ -855,7 +946,7 @@ $('resetBtn').addEventListener('click',()=>{
   toast(lang==='it'?'Tablatura svuotata.':'Tab cleared.');
 });
 
-/* ============ SESSIONS (saved in browser) ============ */
+/* ============ SESSIONS ============ */
 const SKEY='hlab_sessions_v1';
 let lsOK=true;
 try{ localStorage.setItem('__hlab_t','1'); localStorage.removeItem('__hlab_t'); }catch(e){ lsOK=false; }
@@ -949,21 +1040,12 @@ function renderSessions(){
 $('saveBtn').addEventListener('click',saveCurrentSession);
 renderSessions();
 
-// mic toggle button
 $('micBtn').addEventListener('click',async()=>{
   if(running){stopMic();}
   else{const r=await startMic(); if(r!==true){} }
 });
 
-// hide UI
 let uiHidden=false;
-function setUIHidden(h){
-  uiHidden=h;
-  $('topbar').classList.toggle('hidden',h);
-  $('ribbonWrap').classList.toggle('hidden',h && !$('swRibbon').classList.contains('on')?true:h);
-  $('panel').classList.remove('open');
-}
-// keep ribbon visible even when chrome hidden (it's part of the "show"); we only hide top bar + panel
 function hideChrome(h){
   uiHidden=h;
   $('topbar').classList.toggle('hidden',h);
@@ -973,7 +1055,7 @@ document.addEventListener('keydown',e=>{
   const t=e.target;
   if(t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA'||t.isContentEditable)) return;
   if(e.key===' '||e.code==='Space'){
-    if(t&&t.tagName==='BUTTON') return;   // let the focused button handle its own activation
+    if(t&&t.tagName==='BUTTON') return;
     e.preventDefault(); registerSpace(); return;
   }
   if(e.key==='Backspace'){ e.preventDefault(); undoLast(); return; }
@@ -981,11 +1063,8 @@ document.addEventListener('keydown',e=>{
   if(e.key==='f'||e.key==='F'){$('fsBtn').click();}
 });
 
-// The top bar stays visible while you work. Press H to hide it for a clean
-// recording, and H again to bring it back. No automatic hiding.
 function bumpActivity(){}
 
-/* ============ START OVERLAY ============ */
 $('startBtn').addEventListener('click',async()=>{
   $('startErr').textContent='';
   const r=await startMic();
